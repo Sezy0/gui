@@ -1765,6 +1765,73 @@ function DiscordLib:Window(text)
 			TopFrameHolder.Size = UDim2.new(0, newWidth, 0, 22)
 			ServersHoldFrame.Size = UDim2.new(0, 71, 0, newHeight)
 			ServersHold.Size = UDim2.new(0, 71, 0, newHeight - 23)
+			
+			-- Update all ServerFrame content (dynamically find and resize)
+			for _, serverFrame in pairs(ServersHolder:GetChildren()) do
+				if serverFrame:IsA("Frame") and serverFrame.Name == "ServerFrame" then
+					local contentWidth = newWidth - 71
+					local contentHeight = newHeight - 23
+					
+					serverFrame.Size = UDim2.new(0, contentWidth, 0, contentHeight)
+					
+					-- Update GlowFrame
+					local glowFrame = serverFrame:FindFirstChild("GlowFrame")
+					if glowFrame then
+						glowFrame.Size = UDim2.new(0, contentWidth, 0, 40)
+					end
+					
+					-- Update ServerContentFrame
+					local serverContent = serverFrame:FindFirstChild("ServerContentFrame")
+					if serverContent then
+						serverContent.Size = UDim2.new(0, 180, 0, contentHeight - 40)
+					end
+					
+					-- Update ChannelTitleFrame
+					local channelTitle = serverFrame:FindFirstChild("ChannelTitleFrame")
+					if channelTitle then
+						channelTitle.Size = UDim2.new(0, contentWidth - 180, 0, 40)
+					end
+					
+					-- Update ChannelContentFrame
+					local channelContent = serverFrame:FindFirstChild("ChannelContentFrame")
+					if channelContent then
+						channelContent.Size = UDim2.new(0, contentWidth - 180, 0, contentHeight - 40)
+						
+						-- Update ChannelHolder inside
+						for _, channelHolder in pairs(channelContent:GetChildren()) do
+							if channelHolder:IsA("ScrollingFrame") and channelHolder.Name == "ChannelHolder" then
+								channelHolder.Size = UDim2.new(0, contentWidth - 198, 0, contentHeight - 62)
+								
+								-- Update button widths inside channel
+								for _, item in pairs(channelHolder:GetChildren()) do
+									if item:IsA("GuiObject") and (item.Name == "Button" or item.Name == "Toggle" or item.Name == "Slider") then
+										local newItemWidth = contentWidth - 210
+										if newItemWidth > 300 then
+											item.Size = UDim2.new(0, newItemWidth, 0, item.AbsoluteSize.Y)
+										end
+									end
+								end
+							end
+						end
+					end
+					
+					-- Update ServerChannelHolder
+					local serverChannelHolder = serverContent and serverContent:FindFirstChild("ServerChannelHolder")
+					if serverChannelHolder then
+						serverChannelHolder.Size = UDim2.new(0, 179, 0, contentHeight - 95)
+					end
+				end
+			end
+			
+			-- Update Settings Frame if exists
+			local settingsFrame = MainFrame:FindFirstChild("SettingsFrame")
+			if settingsFrame then
+				settingsFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+				local settings = settingsFrame:FindFirstChild("Settings")
+				if settings then
+					settings.Size = UDim2.new(0, newWidth, 0, newHeight - 21)
+				end
+			end
 		end
 	end)
 	
