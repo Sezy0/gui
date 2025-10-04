@@ -1727,12 +1727,14 @@ function DiscordLib:Window(text)
 	local resizeStartPos = nil
 	local resizeStartSize = nil
 	local resizeStartMouse = nil
+	local resizeStartAbsPos = nil
 	
 	ResizeHandle.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			resizing = true
 			resizeStartPos = MainFrame.Position
 			resizeStartSize = MainFrame.AbsoluteSize
+			resizeStartAbsPos = MainFrame.AbsolutePosition
 			resizeStartMouse = UserInputService:GetMouseLocation()
 			ResizeHandle.BackgroundTransparency = 0.2
 		end
@@ -1747,18 +1749,19 @@ function DiscordLib:Window(text)
 			local newWidth = math.clamp(resizeStartSize.X + mouseDelta.X, minWidth, maxWidth)
 			local newHeight = math.clamp(resizeStartSize.Y + mouseDelta.Y, minHeight, maxHeight)
 			
-			-- Calculate how much to offset position (since anchor is 0.5, 0.5)
-			local widthDiff = newWidth - resizeStartSize.X
-			local heightDiff = newHeight - resizeStartSize.Y
+			-- Calculate the top-left corner position (accounting for anchor 0.5, 0.5)
+			-- Top-left = Center - (Size / 2)
+			local topLeftX = resizeStartAbsPos.X - (resizeStartSize.X / 2)
+			local topLeftY = resizeStartAbsPos.Y - (resizeStartSize.Y / 2)
 			
-			-- Update size and position to keep top-left corner fixed
+			-- Calculate new center position to keep top-left fixed
+			-- New Center = TopLeft + (New Size / 2)
+			local newCenterX = topLeftX + (newWidth / 2)
+			local newCenterY = topLeftY + (newHeight / 2)
+			
+			-- Update size and position
 			MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
-			MainFrame.Position = UDim2.new(
-				resizeStartPos.X.Scale,
-				resizeStartPos.X.Offset + (widthDiff / 2),
-				resizeStartPos.Y.Scale,
-				resizeStartPos.Y.Offset + (heightDiff / 2)
-			)
+			MainFrame.Position = UDim2.new(0, newCenterX, 0, newCenterY)
 			
 			-- Update sub-components sizes
 			TopFrame.Size = UDim2.new(0, newWidth, 0, 22)
