@@ -1716,12 +1716,6 @@ function DiscordLib:Window(text)
 	local minWidth, minHeight = 500, 350
 	local maxWidth, maxHeight = 1200, 800
 	
-	ResizeHandle.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			resizing = true
-			ResizeHandle.BackgroundTransparency = 0.2
-		end
-	end)
 	
 	ResizeHandle.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -1730,15 +1724,41 @@ function DiscordLib:Window(text)
 		end
 	end)
 	
+	local resizeStartPos = nil
+	local resizeStartSize = nil
+	local resizeStartMouse = nil
+	
+	ResizeHandle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			resizing = true
+			resizeStartPos = MainFrame.Position
+			resizeStartSize = MainFrame.AbsoluteSize
+			resizeStartMouse = UserInputService:GetMouseLocation()
+			ResizeHandle.BackgroundTransparency = 0.2
+		end
+	end)
+	
 	UserInputService.InputChanged:Connect(function(input)
 		if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 			local mousePos = UserInputService:GetMouseLocation()
-			local framePos = MainFrame.AbsolutePosition
 			
-			local newWidth = math.clamp(mousePos.X - framePos.X, minWidth, maxWidth)
-			local newHeight = math.clamp(mousePos.Y - framePos.Y, minHeight, maxHeight)
+			-- Calculate size delta from mouse movement
+			local mouseDelta = mousePos - resizeStartMouse
+			local newWidth = math.clamp(resizeStartSize.X + mouseDelta.X, minWidth, maxWidth)
+			local newHeight = math.clamp(resizeStartSize.Y + mouseDelta.Y, minHeight, maxHeight)
 			
+			-- Calculate how much to offset position (since anchor is 0.5, 0.5)
+			local widthDiff = newWidth - resizeStartSize.X
+			local heightDiff = newHeight - resizeStartSize.Y
+			
+			-- Update size and position to keep top-left corner fixed
 			MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+			MainFrame.Position = UDim2.new(
+				resizeStartPos.X.Scale,
+				resizeStartPos.X.Offset + (widthDiff / 2),
+				resizeStartPos.Y.Scale,
+				resizeStartPos.Y.Offset + (heightDiff / 2)
+			)
 			
 			-- Update sub-components sizes
 			TopFrame.Size = UDim2.new(0, newWidth, 0, 22)
