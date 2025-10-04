@@ -1656,6 +1656,122 @@ function DiscordLib:Window(text)
 	end
 
 	MakeDraggable(TopFrame, MainFrame)
+	
+	-- iPhone-style Home Bar (Draggable Bottom Bar)
+	local HomeBar = Instance.new("Frame")
+	local HomeBarIndicator = Instance.new("Frame")
+	local HomeBarCorner = Instance.new("UICorner")
+	
+	HomeBar.Name = "HomeBar"
+	HomeBar.Parent = MainFrame
+	HomeBar.BackgroundColor3 = Color3.fromRGB(32, 34, 37)
+	HomeBar.BackgroundTransparency = 0.3
+	HomeBar.BorderSizePixel = 0
+	HomeBar.Position = UDim2.new(0, 0, 1, -20)
+	HomeBar.Size = UDim2.new(1, 0, 0, 20)
+	HomeBar.ZIndex = 10
+	
+	HomeBarIndicator.Name = "HomeBarIndicator"
+	HomeBarIndicator.Parent = HomeBar
+	HomeBarIndicator.AnchorPoint = Vector2.new(0.5, 0.5)
+	HomeBarIndicator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	HomeBarIndicator.BackgroundTransparency = 0.7
+	HomeBarIndicator.BorderSizePixel = 0
+	HomeBarIndicator.Position = UDim2.new(0.5, 0, 0.5, 0)
+	HomeBarIndicator.Size = UDim2.new(0, 100, 0, 4)
+	
+	HomeBarCorner.CornerRadius = UDim.new(1, 0)
+	HomeBarCorner.Parent = HomeBarIndicator
+	
+	-- Make HomeBar draggable too
+	MakeDraggable(HomeBar, MainFrame)
+	
+	-- Resize Handle (Bottom Right Corner)
+	local ResizeHandle = Instance.new("Frame")
+	local ResizeIcon = Instance.new("ImageLabel")
+	local ResizeCorner = Instance.new("UICorner")
+	
+	ResizeHandle.Name = "ResizeHandle"
+	ResizeHandle.Parent = MainFrame
+	ResizeHandle.BackgroundColor3 = Color3.fromRGB(40, 43, 47)
+	ResizeHandle.BackgroundTransparency = 0.5
+	ResizeHandle.BorderSizePixel = 0
+	ResizeHandle.Position = UDim2.new(1, -25, 1, -25)
+	ResizeHandle.Size = UDim2.new(0, 25, 0, 25)
+	ResizeHandle.ZIndex = 11
+	
+	ResizeIcon.Name = "ResizeIcon"
+	ResizeIcon.Parent = ResizeHandle
+	ResizeIcon.BackgroundTransparency = 1
+	ResizeIcon.Position = UDim2.new(0.2, 0, 0.2, 0)
+	ResizeIcon.Size = UDim2.new(0.6, 0, 0.6, 0)
+	ResizeIcon.Image = "rbxassetid://6035047377"
+	ResizeIcon.ImageColor3 = Color3.fromRGB(160, 160, 160)
+	
+	ResizeCorner.CornerRadius = UDim.new(0, 5)
+	ResizeCorner.Parent = ResizeHandle
+	
+	-- Resize functionality
+	local resizing = false
+	local minWidth, minHeight = 500, 350
+	local maxWidth, maxHeight = 1200, 800
+	
+	ResizeHandle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			resizing = true
+			ResizeHandle.BackgroundTransparency = 0.2
+		end
+	end)
+	
+	ResizeHandle.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			resizing = false
+			ResizeHandle.BackgroundTransparency = 0.5
+		end
+	end)
+	
+	UserInputService.InputChanged:Connect(function(input)
+		if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local mousePos = UserInputService:GetMouseLocation()
+			local framePos = MainFrame.AbsolutePosition
+			
+			local newWidth = math.clamp(mousePos.X - framePos.X, minWidth, maxWidth)
+			local newHeight = math.clamp(mousePos.Y - framePos.Y, minHeight, maxHeight)
+			
+			MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+			
+			-- Update sub-components sizes
+			TopFrame.Size = UDim2.new(0, newWidth, 0, 22)
+			TopFrameHolder.Size = UDim2.new(0, newWidth, 0, 22)
+			ServersHoldFrame.Size = UDim2.new(0, 71, 0, newHeight)
+			ServersHold.Size = UDim2.new(0, 71, 0, newHeight - 23)
+		end
+	end)
+	
+	-- Hover effect for HomeBar
+	HomeBar.MouseEnter:Connect(function()
+		TweenService:Create(HomeBarIndicator, TweenInfo.new(0.2), {BackgroundTransparency = 0.5}):Play()
+	end)
+	
+	HomeBar.MouseLeave:Connect(function()
+		TweenService:Create(HomeBarIndicator, TweenInfo.new(0.2), {BackgroundTransparency = 0.7}):Play()
+	end)
+	
+	-- Hover effect for ResizeHandle
+	ResizeHandle.MouseEnter:Connect(function()
+		if not resizing then
+			ResizeHandle.BackgroundTransparency = 0.2
+			TweenService:Create(ResizeIcon, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+		end
+	end)
+	
+	ResizeHandle.MouseLeave:Connect(function()
+		if not resizing then
+			ResizeHandle.BackgroundTransparency = 0.5
+			TweenService:Create(ResizeIcon, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(160, 160, 160)}):Play()
+		end
+	end)
+	
 	ServersHoldPadding.PaddingLeft = UDim.new(0, 14)
 	local ServerHold = {}
 	function ServerHold:Server(text, img)
